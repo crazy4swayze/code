@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use HTML::TreeBuilder;
+use WWW::Mechanize;
+
+# Uses the database at http://www.portagefilelist.de/
+# to find packages containing the filename supplied by user
+
+@ARGV == 1 or die "Usage: fquery filename\n";
+
+my $file = shift;
+my $url  = 'http://www.portagefilelist.de/index.php/Special:PFLQuery2';
+my $mech = WWW::Mechanize->new;
+
+$mech->get( $url );
+$mech->success or die "Unable to retrieve package information.\n";
+
+$mech->submit_form( 
+    form_number => 1,
+    fields      => { 
+        file        => $file,
+        group_file  => 'on'
+    }
+);
+
+my $tree  = HTML::TreeBuilder->new_from_content( $mech->content );
+my $table = $tree->look_down( _tag => 'table', border => 0 );
+defined $table or die "No matches found.\n";
+
+my @matches = $table->look_down( _tag => 'tr' );
+shift @matches; # remove the header 'category/package'
+
+my %output; 
+my $pad_len = 0;
+
+for ( @matches ) { 
+    my ( $package, $category, $path, $file ) = map { $_->as_text } ( $_->content_list )[ 0..3 ];
+    my $key = join '/', $package, $category;
+    my $value = join '/', $path, $file;
+
+    push @{ $output{ $key } }, $value;
+    $pad_len = length $key if length $key > $pad_len
+}
+
+for my $pkgname ( sort keys %output ) {
+  printf "%-*s => %s\n", $pad_len, $pkgname, $_ for @{ $output{$pkgname} }
+}
