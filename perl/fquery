@@ -8,7 +8,7 @@ use WWW::Mechanize;
 # Uses the database at http://www.portagefilelist.de/
 # to find packages containing the filename supplied by user
 
-@ARGV == 1 or die "Usage: fquery filename\n";
+die "Usage: fquery filename\n" unless @ARGV == 1;
 
 my $file = shift;
 my $url  = 'http://www.portagefilelist.de/index.php/Special:PFLQuery2';
