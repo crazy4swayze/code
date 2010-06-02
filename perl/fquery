@@ -27,7 +27,8 @@ $mech->submit_form(
 
 my $tree  = HTML::TreeBuilder->new_from_content( $mech->content );
 my $table = $tree->look_down( _tag => 'table', border => 0 );
-defined $table or die "No matches found.\n";
+
+die "No matches found.\n" unless defined $table;
 
 my @matches = $table->look_down( _tag => 'tr' );
 shift @matches; # remove the header 'category/package'
